@@ -714,6 +714,207 @@
                 speakResponse("Welcome to Pixcel AI! You can talk to me by clicking the microphone button or typing your questions.");
             }, 1000);
         });
+        document.addEventListener('DOMContentLoaded', function() {
+            // [Previous variable declarations remain the same]
+            
+            // Wake-up phrase detection
+            const WAKE_PHRASE = "hey pixcel";
+            let isAwake = true; // Start awake by default
+            
+            // Initialize speech synthesis
+            const synth = window.speechSynthesis;
+            let voices = [];
+            
+            function populateVoices() {
+                voices = synth.getVoices();
+                voices.sort((a, b) => {
+                    const aQuality = a.name.includes('Natural') ? 1 : 0;
+                    const bQuality = b.name.includes('Natural') ? 1 : 0;
+                    return bQuality - aQuality;
+                });
+            }
+            
+            populateVoices();
+            if (speechSynthesis.onvoiceschanged !== undefined) {
+                speechSynthesis.onvoiceschanged = populateVoices;
+            }
+
+            // [Previous helper functions remain the same until handleCommand]
+
+            // Enhanced command handling
+            function handleCommand(command) {
+                command = command.toLowerCase().trim();
+                
+                // Check for wake phrase
+                if (command.includes(WAKE_PHRASE)) {
+                    isAwake = true;
+                    return "Hello! How can I help you today?";
+                }
+                
+                // If not awake, ignore commands (except wake phrase)
+                if (!isAwake) return null;
+                
+                // Get current time and date
+                const now = new Date();
+                const timeString = now.toLocaleTimeString();
+                const dateString = now.toLocaleDateString('en-US', { 
+                    weekday: 'long', 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric' 
+                });
+                
+                // Application control commands
+                if (command.includes('open youtube') || command.includes('launch youtube')) {
+                    window.open('https://www.youtube.com', '_blank');
+                    return "Opening YouTube for you";
+                }
+                else if (command.includes('open google') || command.includes('launch google')) {
+                    window.open('https://www.google.com', '_blank');
+                    return "Opening Google for you";
+                }
+                else if (command.includes('open gmail') || command.includes('launch gmail')) {
+                    window.open('https://mail.google.com', '_blank');
+                    return "Opening Gmail for you";
+                }
+                else if (command.includes('open calculator')) {
+                    window.open('https://www.google.com/search?q=calculator', '_blank');
+                    return "Opening calculator for you";
+                }
+                else if (command.includes('open maps') || command.includes('launch maps')) {
+                    window.open('https://www.google.com/maps', '_blank');
+                    return "Opening Google Maps for you";
+                }
+                else if (command.includes('open calendar') || command.includes('launch calendar')) {
+                    window.open('https://calendar.google.com', '_blank');
+                    return "Opening Google Calendar for you";
+                }
+                // Navigation commands
+                else if (command.includes('scroll up')) {
+                    window.scrollBy(0, -200);
+                    return "Scrolled up";
+                }
+                else if (command.includes('scroll down')) {
+                    window.scrollBy(0, 200);
+                    return "Scrolled down";
+                }
+                else if (command.includes('go back')) {
+                    window.history.back();
+                    return "Going back";
+                }
+                else if (command.includes('go forward')) {
+                    window.history.forward();
+                    return "Going forward";
+                }
+                else if (command.includes('refresh') || command.includes('reload')) {
+                    window.location.reload();
+                    return "Refreshing the page";
+                }
+                // Search commands
+                else if (command.startsWith('search for') || command.startsWith('look up') || command.startsWith('search youtube for')) {
+                    let query, url;
+                    if (command.startsWith('search youtube for')) {
+                        query = command.replace('search youtube for', '').trim();
+                        url = `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`;
+                    } else {
+                        query = command.replace(/^(search for|look up)/, '').trim();
+                        url = `https://www.google.com/search?q=${encodeURIComponent(query)}`;
+                    }
+                    if (query) {
+                        window.open(url, '_blank');
+                        return `Searching for ${query}`;
+                    }
+                }
+                // Basic commands
+                else if (command.includes('hello') || command.includes('hi') || command.includes('hey')) {
+                    const greetings = [
+                        "Hello there! How can I assist you today?",
+                        "Hi! What can I do for you?",
+                        "Hey! How can I help?",
+                        "Greetings! How may I be of service?"
+                    ];
+                    return greetings[Math.floor(Math.random() * greetings.length)];
+                } 
+                else if (command.includes('time')) {
+                    return `The current time is ${timeString}`;
+                }
+                else if (command.includes('date') || command.includes('today')) {
+                    return `Today is ${dateString}`;
+                }
+                else if (command.includes('weather')) {
+                    return `I can't check real-time weather, but you can ask me about weather concepts or look up your local weather online.`;
+                }
+                else if (command.includes('help')) {
+                    return `I can respond to these commands:
+- "Hey Pixcel" (wake me up)
+- Open/launch [YouTube, Google, Gmail, Maps, Calendar, Calculator]
+- Search for [anything]
+- Search YouTube for [videos]
+- Scroll up/down
+- Go back/forward
+- Refresh/reload
+- What time is it?
+- What's today's date?
+- How's the weather?
+- Help (to see this message)`;
+                }
+                else {
+                    return null; // No specific command matched
+                }
+            }
+
+            // [Previous getAIResponse, sendMessage, and other functions remain the same]
+            
+            // Enhanced speech recognition to detect wake phrase
+            if (isSpeechRecognitionSupported) {
+                recognition.onresult = function(event) {
+                    const transcript = event.results[0][0].transcript.toLowerCase();
+                    
+                    // Check for wake phrase
+                    if (transcript.includes(WAKE_PHRASE)) {
+                        isAwake = true;
+                        userInput.value = '';
+                        speakResponse("Hello! How can I help you today?");
+                        addMessage("Hey Pixcel", true);
+                        addMessage("Hello! How can I help you today?", false);
+                        return;
+                    }
+                    
+                    // Only process if awake or if the command itself is the wake phrase
+                    if (isAwake || transcript.includes(WAKE_PHRASE)) {
+                        userInput.value = transcript;
+                        sendMessage();
+                    }
+                };
+                
+                // Go to sleep after 2 minutes of inactivity
+                let sleepTimeout;
+                function resetSleepTimer() {
+                    clearTimeout(sleepTimeout);
+                    sleepTimeout = setTimeout(() => {
+                        isAwake = false;
+                        speakResponse("I'm going to sleep now. Say 'Hey Pixcel' to wake me up.");
+                        addMessage("I'm going to sleep now. Say 'Hey Pixcel' to wake me up.", false);
+                    }, 120000); // 2 minutes
+                }
+                
+                // Reset timer on any interaction
+                micBtn.addEventListener('mousedown', resetSleepTimer);
+                userInput.addEventListener('focus', resetSleepTimer);
+                userInput.addEventListener('keydown', resetSleepTimer);
+                sendBtn.addEventListener('click', resetSleepTimer);
+                
+                // Start the timer
+                resetSleepTimer();
+            }
+
+            // Initial greeting
+            setTimeout(() => {
+                speakResponse("Welcome to Pixcel AI! Say 'Hey Pixcel' to get my attention. You can ask me to open YouTube, Google, or other services.");
+                addMessage("Welcome to Pixcel AI! Say 'Hey Pixcel' to get my attention.", false);
+            }, 1000);
+        });
+    
     </script>
 </body>
 </html>
