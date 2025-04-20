@@ -3,7 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" href="Blue_modern_Design_circle_tech_mcvsdodern_logo_element-removebg-preview.png">
     <title>Pixel.AI</title>
     <style>
         :root {
@@ -82,8 +81,8 @@
         .ai-core.listening {
             animation: pulse 1s ease-in-out infinite, glow 2s ease-in-out infinite;
             box-shadow: 
-                0 0 40px 15px rgba(113, 100, 255, 0.5),
-                inset 0 0 30px rgba(150, 251, 255, 0.9);
+                0 0 40px 15px rgba(100, 255, 252, 0.5),
+                inset 0 0 30px rgba(150, 237, 255, 0.9);
         }
 
         @keyframes pulse {
@@ -359,6 +358,55 @@
             border: 1px solid rgba(255, 74, 107, 0.3);
         }
 
+        .sleep-mode {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(10, 10, 30, 0.9);
+            z-index: 2000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(5px);
+            transition: all 0.5s ease;
+            color: rgba(255,255,255,0.8);
+        }
+        
+        .wake-hint {
+            font-size: 24px;
+            margin-bottom: 30px;
+            text-shadow: 0 0 10px rgba(100, 149, 237, 0.7);
+            animation: fadeInOut 3s infinite;
+        }
+        
+        @keyframes fadeInOut {
+            0%, 100% { opacity: 0.6; }
+            50% { opacity: 1; }
+        }
+        
+        .pulse-circle {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: rgba(74, 107, 255, 0.1);
+            border: 2px solid rgba(74, 107, 255, 0.3);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            animation: pulse 2s infinite;
+        }
+        
+        .inner-circle {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--primary);
+            box-shadow: 0 0 20px var(--primary);
+        }
+
         @media (max-width: 600px) {
             .chat-app {
                 height: 100vh;
@@ -391,19 +439,18 @@
             </div>
             <div>
                 <div class="ai-title">Pixel.AI</div>
-                <div class="ai-subtitle">Try saying: "Hello", "What time is it?", "Search for cats"</div>
+                <div class="ai-subtitle">Try saying: "Hey Pixel", "Open YouTube", "What time is it?"</div>
             </div>
         </div>
 
         <div class="chat-container" id="chat-area">
             <div class="message ai-message">
-                Hello! I'm your AI assistant. You can talk to me or type commands like:
+                Hello! I'm your AI assistant. Say "Hey Pixel" to wake me or try commands like:
                 <div style="margin-top: 10px;">
-                    <span class="command-suggestion">Hello</span>
+                    <span class="command-suggestion">Hey Pixel</span>
+                    <span class="command-suggestion">Open YouTube</span>
                     <span class="command-suggestion">What time is it?</span>
-                    <span class="command-suggestion">What's today's date?</span>
-                    <span class="command-suggestion">Search for cats</span>
-                    <span class="command-suggestion">Help</span>
+                    <span class="command-suggestion">Goodbye</span>
                 </div>
             </div>
         </div>
@@ -434,6 +481,13 @@
             </button>
         </div>
     </div>
+    
+    <div class="sleep-mode" id="sleep-mode">
+        <div class="wake-hint">Say "Hey Pixel"</div>
+        <div class="pulse-circle">
+            <div class="inner-circle"></div>
+        </div>
+    </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
@@ -442,81 +496,58 @@
             const sendBtn = document.getElementById('send-btn');
             const micBtn = document.getElementById('mic-btn');
             const typingIndicator = document.getElementById('typing-indicator');
+            const sleepMode = document.getElementById('sleep-mode');
             const aiCore = document.getElementById('ai-core');
             const aiCoreInner = document.getElementById('ai-core-inner');
             const commandSuggestions = document.querySelectorAll('.command-suggestion');
 
+            // Voice assistant settings
+            const WAKE_PHRASE = "hey pixel";
+            const GOODBYE_PHRASES = ["goodbye", "bye", "see you", "sleep now"];
+            let isAwake = false;
+            let continuousRecognition;
+            let sleepTimer;
+            let femaleVoice = null;
+            
             // Initialize speech synthesis
             const synth = window.speechSynthesis;
             let voices = [];
-            
+
             function populateVoices() {
                 voices = synth.getVoices();
-                // Prefer natural-sounding voices
-                voices.sort((a, b) => {
-                    const aQuality = a.name.includes('Natural') ? 1 : 0;
-                    const bQuality = b.name.includes('Natural') ? 1 : 0;
-                    return bQuality - aQuality;
-                });
+                // Find the most natural female voice
+                femaleVoice = voices.find(v => 
+                    v.name.includes('Female') || 
+                    v.name.includes('Woman') ||
+                    v.name.includes('female') ||
+                    v.name.includes('woman')
+                ) || voices[0];
+                
+                if (femaleVoice) {
+                    console.log('Selected voice:', femaleVoice.name);
+                }
             }
-            
-            populateVoices();
-            if (speechSynthesis.onvoiceschanged !== undefined) {
-                speechSynthesis.onvoiceschanged = populateVoices;
-            }
 
-            // Add click handlers for command suggestions
-            commandSuggestions.forEach(suggestion => {
-                suggestion.addEventListener('click', function() {
-                    userInput.value = this.textContent;
-                    userInput.focus();
-                });
-            });
-
-            // Check if browser supports speech recognition
-            const isSpeechRecognitionSupported = 'webkitSpeechRecognition' in window || 'SpeechRecognition' in window;
-            let recognition;
-            
-            if (isSpeechRecognitionSupported) {
-                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-                recognition = new SpeechRecognition();
-                recognition.continuous = false;
-                recognition.interimResults = false;
-                recognition.lang = 'en-US';
-
-                recognition.onstart = function() {
-                    micBtn.classList.add('listening');
-                    aiCore.classList.add('listening');
-                    aiCoreInner.classList.add('listening');
-                    userInput.placeholder = "Listening...";
-                    addStatusMessage("Listening... Speak now");
-                };
-
-                recognition.onerror = function(event) {
-                    console.error('Speech recognition error', event.error);
-                    micBtn.classList.remove('listening');
-                    aiCore.classList.remove('listening');
-                    aiCoreInner.classList.remove('listening');
-                    userInput.placeholder = "Ask me anything...";
-                    addMessage(`Sorry, I couldn't hear you. ${event.error === 'no-speech' ? 'No speech detected.' : 'Please try again.'}`, false);
-                    addStatusMessage("Click microphone to try again", true);
-                };
-
-                recognition.onend = function() {
-                    micBtn.classList.remove('listening');
-                    aiCore.classList.remove('listening');
-                    aiCoreInner.classList.remove('listening');
-                    userInput.placeholder = "Ask me anything...";
-                };
-
-                recognition.onresult = function(event) {
-                    const transcript = event.results[0][0].transcript;
-                    userInput.value = transcript;
-                    sendMessage();
-                };
-            } else {
-                micBtn.style.display = 'none';
-                addStatusMessage("Voice input not supported in your browser", true);
+            // Configure smooth female voice
+            function speakResponse(text) {
+                if (synth.speaking) synth.cancel();
+                
+                const utterance = new SpeechSynthesisUtterance(text);
+                
+                if (femaleVoice) {
+                    utterance.voice = femaleVoice;
+                    utterance.pitch = 1.1;  // Slightly higher pitch
+                    utterance.rate = 0.85;  // Slower speaking rate
+                    utterance.volume = 1;
+                }
+                
+                // Add natural pauses for more fluid speech
+                utterance.text = text
+                    .replace(/,/g, ',<break time="300ms"/>')
+                    .replace(/\./g, '.<break time="400ms"/>')
+                    .replace(/\?/g, '?<break time="500ms"/>');
+                
+                synth.speak(utterance);
             }
 
             // Add message to chat
@@ -528,231 +559,92 @@
                 chatArea.appendChild(messageDiv);
                 chatArea.scrollTop = chatArea.scrollHeight;
                 
-                // Speak AI responses
                 if (!isUser) {
                     speakResponse(text);
                 }
             }
-            
-            // Add status message
-            function addStatusMessage(text, isError = false) {
-                const statusDiv = document.createElement('div');
-                statusDiv.classList.add('status-message');
-                if (isError) statusDiv.classList.add('error-message');
-                statusDiv.textContent = text;
-                chatArea.appendChild(statusDiv);
-                chatArea.scrollTop = chatArea.scrollHeight;
+
+            // Initialize continuous recognition for wake word detection
+            function initWakeWordDetection() {
+                if (!('webkitSpeechRecognition' in window)) {
+                    console.log("Wake word detection not supported");
+                    addMessage("Voice wake-up not supported in your browser. Please use the microphone button.", false);
+                    return;
+                }
+                
+                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                continuousRecognition = new SpeechRecognition();
+                continuousRecognition.continuous = true;
+                continuousRecognition.interimResults = false;
+                continuousRecognition.lang = 'en-US';
+                
+                continuousRecognition.onresult = (event) => {
+                    const transcript = event.results[event.results.length-1][0].transcript.toLowerCase();
+                    
+                    if (!isAwake && transcript.includes(WAKE_PHRASE)) {
+                        wakeUp();
+                    }
+                    else if (isAwake && GOODBYE_PHRASES.some(phrase => transcript.includes(phrase))) {
+                        sayGoodbye();
+                    }
+                    else if (isAwake) {
+                        processVoiceCommand(transcript);
+                    }
+                };
+                
+                continuousRecognition.onerror = (event) => {
+                    if (event.error === 'no-speech') {
+                        continuousRecognition.start();
+                    }
+                };
+                
+                continuousRecognition.onend = () => {
+                    if (!isAwake) continuousRecognition.start();
+                };
+                
+                continuousRecognition.start();
             }
 
-            // Speak response
-            function speakResponse(text) {
-                if (synth.speaking) {
-                    synth.cancel();
-                }
+            function wakeUp() {
+                isAwake = true;
+                sleepMode.style.display = 'none';
+                resetSleepTimer();
                 
-                const utterance = new SpeechSynthesisUtterance(text);
-                
-                // Select the best available voice
-                if (voices.length > 0) {
-                    utterance.voice = voices[0]; // Use the first (preferred) voice
-                    utterance.pitch = 1.1;
-                    utterance.rate = 0.9;
-                    utterance.volume = 1;
-                }
-                
-                // Add natural pauses
-                text = text.replace(/([,.?!])/g, '$1 ');
-                
-                synth.speak(utterance);
+                speakResponse("Hello there, I'm Pixel. How can I assist you today?");
+                addMessage("Pixel: Hello there, I'm Pixel. How can I assist you today?", false);
+            }
+
+            function sayGoodbye() {
+                speakResponse("Goodbye for now. Just say 'Hey Pixel' whenever you need me.");
+                addMessage("Pixel: Goodbye for now. Just say 'Hey Pixel' whenever you need me.", false);
+                sleep();
+            }
+
+            function sleep() {
+                isAwake = false;
+                sleepMode.style.display = 'flex';
+                if (continuousRecognition) continuousRecognition.start();
+            }
+
+            function resetSleepTimer() {
+                clearTimeout(sleepTimer);
+                sleepTimer = setTimeout(() => {
+                    if (isAwake) {
+                        speakResponse("I'll be going to sleep now. Just say 'Hey Pixel' to wake me.");
+                        addMessage("Pixel: I'll be going to sleep now. Just say 'Hey Pixel' to wake me.", false);
+                        sleep();
+                    }
+                }, 120000); // 2 minutes
+            }
+
+            function processVoiceCommand(command) {
+                userInput.value = command;
+                sendMessage();
             }
 
             // Handle commands
             function handleCommand(command) {
                 command = command.toLowerCase().trim();
-                
-                // Get current time and date
-                const now = new Date();
-                const timeString = now.toLocaleTimeString();
-                const dateString = now.toLocaleDateString('en-US', { 
-                    weekday: 'long', 
-                    year: 'numeric', 
-                    month: 'long', 
-                    day: 'numeric' 
-                });
-                
-                // Navigation commands
-                if (command.includes('scroll up')) {
-                    window.scrollBy(0, -200);
-                    return "Scrolled up";
-                }
-                else if (command.includes('scroll down')) {
-                    window.scrollBy(0, 200);
-                    return "Scrolled down";
-                }
-                else if (command.includes('go back')) {
-                    window.history.back();
-                    return "Going back";
-                }
-                else if (command.includes('go forward')) {
-                    window.history.forward();
-                    return "Going forward";
-                }
-                else if (command.startsWith('search for') || command.startsWith('look up')) {
-                    const query = command.replace(/^(search for|look up)/, '').trim();
-                    if (query) {
-                        window.open(`https://www.google.com/search?q=${encodeURIComponent(query)}`, '_blank');
-                        return `Searching for ${query}`;
-                    }
-                }
-                // Basic commands
-                else if (command.includes('hello') || command.includes('hi') || command.includes('hey')) {
-                    const greetings = [
-                        "Hello there! How can I assist you today?",
-                        "Hi! What can I do for you?",
-                        "Hey! How can I help?",
-                        "Greetings! How may I be of service?"
-                    ];
-                    return greetings[Math.floor(Math.random() * greetings.length)];
-                } 
-                else if (command.includes('time')) {
-                    return `The current time is ${timeString}`;
-                }
-                else if (command.includes('date') || command.includes('today')) {
-                    return `Today is ${dateString}`;
-                }
-                else if (command.includes('weather')) {
-                    return `I can't check real-time weather, but you can ask me about weather concepts or look up your local weather online.`;
-                }
-                else if (command.includes('help')) {
-                    return `I can respond to these commands:
-- Hello/Hi/Hey
-- What time is it?
-- What's today's date?
-- How's the weather?
-- Search for [anything]
-- Scroll up/down
-- Go back/forward
-- Help (to see this message)`;
-                }
-                else {
-                    return null; // No specific command matched
-                }
-            }
-
-            // Get AI response
-            async function getAIResponse(userMessage) {
-                // First check for commands
-                const commandResponse = handleCommand(userMessage);
-                if (commandResponse) {
-                    return commandResponse;
-                }
-                
-                // Show typing indicator
-                typingIndicator.style.display = 'block';
-                chatArea.scrollTop = chatArea.scrollHeight;
-                
-                try {
-                    // Simulate API delay for non-command responses
-                    await new Promise(resolve => setTimeout(resolve, 800 + Math.random() * 1000));
-                    
-                    // For demo purposes - replace with actual API call
-                    const responses = [
-                        `I understand you're asking about "${userMessage}". Here's what I found...`,
-                        `Regarding "${userMessage}", my analysis suggests...`,
-                        `Interesting question about ${userMessage}. Based on my knowledge...`,
-                        `I've processed your query about ${userMessage}. Here's the information...`,
-                        `Thanks for asking about ${userMessage}. Here's what I can share...`
-                    ];
-                    
-                    return responses[Math.floor(Math.random() * responses.length)];
-                } finally {
-                    typingIndicator.style.display = 'none';
-                }
-            }
-
-            // Handle send message
-            async function sendMessage() {
-                const message = userInput.value.trim();
-                if (message) {
-                    // Add user message
-                    addMessage(message, true);
-                    userInput.value = '';
-                    
-                    // Get AI response
-                    const aiResponse = await getAIResponse(message);
-                    addMessage(aiResponse, false);
-                }
-            }
-
-            // Event listeners
-            sendBtn.addEventListener('click', sendMessage);
-            
-            userInput.addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') {
-                    sendMessage();
-                }
-            });
-
-            micBtn.addEventListener('click', function() {
-                if (isSpeechRecognitionSupported) {
-                    if (micBtn.classList.contains('listening')) {
-                        recognition.stop();
-                    } else {
-                        try {
-                            recognition.start();
-                        } catch (e) {
-                            addStatusMessage("Error starting voice recognition. Please try again.", true);
-                        }
-                    }
-                } else {
-                    addMessage("Sorry, voice input is not supported in your browser.", false);
-                }
-            });
-            
-            // Initial greeting
-            setTimeout(() => {
-                speakResponse("Welcome to Pixcel AI! You can talk to me by clicking the microphone button or typing your questions.");
-            }, 1000);
-        });
-        document.addEventListener('DOMContentLoaded', function() {
-            // [Previous variable declarations remain the same]
-            
-            // Wake-up phrase detection
-            const WAKE_PHRASE = "hey pixcel";
-            let isAwake = true; // Start awake by default
-            
-            // Initialize speech synthesis
-            const synth = window.speechSynthesis;
-            let voices = [];
-            
-            function populateVoices() {
-                voices = synth.getVoices();
-                voices.sort((a, b) => {
-                    const aQuality = a.name.includes('Natural') ? 1 : 0;
-                    const bQuality = b.name.includes('Natural') ? 1 : 0;
-                    return bQuality - aQuality;
-                });
-            }
-            
-            populateVoices();
-            if (speechSynthesis.onvoiceschanged !== undefined) {
-                speechSynthesis.onvoiceschanged = populateVoices;
-            }
-
-            // [Previous helper functions remain the same until handleCommand]
-
-            // Enhanced command handling
-            function handleCommand(command) {
-                command = command.toLowerCase().trim();
-                
-                // Check for wake phrase
-                if (command.includes(WAKE_PHRASE)) {
-                    isAwake = true;
-                    return "Hello! How can I help you today?";
-                }
-                
-                // If not awake, ignore commands (except wake phrase)
-                if (!isAwake) return null;
                 
                 // Get current time and date
                 const now = new Date();
@@ -846,7 +738,7 @@
                 }
                 else if (command.includes('help')) {
                     return `I can respond to these commands:
-- "Hey Pixcel" (wake me up)
+- "Hey Pixel" (wake me up)
 - Open/launch [YouTube, Google, Gmail, Maps, Calendar, Calculator]
 - Search for [anything]
 - Search YouTube for [videos]
@@ -856,65 +748,141 @@
 - What time is it?
 - What's today's date?
 - How's the weather?
-- Help (to see this message)`;
+- Goodbye (put me to sleep)`;
                 }
                 else {
                     return null; // No specific command matched
                 }
             }
 
-            // [Previous getAIResponse, sendMessage, and other functions remain the same]
-            
-            // Enhanced speech recognition to detect wake phrase
-            if (isSpeechRecognitionSupported) {
-                recognition.onresult = function(event) {
-                    const transcript = event.results[0][0].transcript.toLowerCase();
-                    
-                    // Check for wake phrase
-                    if (transcript.includes(WAKE_PHRASE)) {
-                        isAwake = true;
-                        userInput.value = '';
-                        speakResponse("Hello! How can I help you today?");
-                        addMessage("Hey Pixcel", true);
-                        addMessage("Hello! How can I help you today?", false);
-                        return;
-                    }
-                    
-                    // Only process if awake or if the command itself is the wake phrase
-                    if (isAwake || transcript.includes(WAKE_PHRASE)) {
-                        userInput.value = transcript;
-                        sendMessage();
-                    }
-                };
-                
-                // Go to sleep after 2 minutes of inactivity
-                let sleepTimeout;
-                function resetSleepTimer() {
-                    clearTimeout(sleepTimeout);
-                    sleepTimeout = setTimeout(() => {
-                        isAwake = false;
-                        speakResponse("I'm going to sleep now. Say 'Hey Pixcel' to wake me up.");
-                        addMessage("I'm going to sleep now. Say 'Hey Pixcel' to wake me up.", false);
-                    }, 120000); // 2 minutes
+            // Get AI response
+            async function getAIResponse(userMessage) {
+                // First check for commands
+                const commandResponse = handleCommand(userMessage);
+                if (commandResponse) {
+                    return commandResponse;
                 }
                 
-                // Reset timer on any interaction
-                micBtn.addEventListener('mousedown', resetSleepTimer);
-                userInput.addEventListener('focus', resetSleepTimer);
-                userInput.addEventListener('keydown', resetSleepTimer);
-                sendBtn.addEventListener('click', resetSleepTimer);
+                // Show typing indicator
+                typingIndicator.style.display = 'block';
+                chatArea.scrollTop = chatArea.scrollHeight;
                 
-                // Start the timer
-                resetSleepTimer();
+                try {
+                    // Simulate API delay for non-command responses
+                    await new Promise(resolve => setTimeout(resolve, 800 + Math.random() * 1000));
+                    
+                    // For demo purposes - replace with actual API call
+                    const responses = [
+                        `I understand you're asking about "${userMessage}". Here's what I found...`,
+                        `Regarding "${userMessage}", my analysis suggests...`,
+                        `Interesting question about ${userMessage}. Based on my knowledge...`,
+                        `I've processed your query about ${userMessage}. Here's the information...`,
+                        `Thanks for asking about ${userMessage}. Here's what I can share...`
+                    ];
+                    
+                    return responses[Math.floor(Math.random() * responses.length)];
+                } finally {
+                    typingIndicator.style.display = 'none';
+                }
             }
 
-            // Initial greeting
-            setTimeout(() => {
-                speakResponse("Welcome to Pixcel AI! Say 'Hey Pixcel' to get my attention. You can ask me to open YouTube, Google, or other services.");
-                addMessage("Welcome to Pixcel AI! Say 'Hey Pixcel' to get my attention.", false);
-            }, 1000);
+            // Handle send message
+            async function sendMessage() {
+                const message = userInput.value.trim();
+                if (message) {
+                    addMessage(message, true);
+                    userInput.value = '';
+                    resetSleepTimer();
+                    
+                    const aiResponse = await getAIResponse(message);
+                    addMessage(aiResponse, false);
+                }
+            }
+
+            // Initialize the app
+            function init() {
+                populateVoices();
+                if (speechSynthesis.onvoiceschanged !== undefined) {
+                    speechSynthesis.onvoiceschanged = populateVoices;
+                }
+                
+                // Start in sleep mode
+                sleep();
+                
+                // Initialize wake word detection
+                setTimeout(initWakeWordDetection, 1000);
+                
+                // Initial silent greeting
+                setTimeout(() => {
+                    addMessage("Pixel: I'm Pixel, your voice assistant. Say 'Hey Pixel' to wake me.", false);
+                }, 1500);
+            }
+
+            // Event listeners
+            sendBtn.addEventListener('click', sendMessage);
+            
+            userInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    sendMessage();
+                }
+            });
+
+            micBtn.addEventListener('click', function() {
+                if (isAwake) {
+                    resetSleepTimer();
+                    if (recognition) {
+                        recognition.start();
+                    }
+                }
+            });
+
+            // Initialize click handlers for command suggestions
+            commandSuggestions.forEach(suggestion => {
+                suggestion.addEventListener('click', function() {
+                    userInput.value = this.textContent;
+                    userInput.focus();
+                });
+            });
+
+            // Initialize speech recognition for button
+            let recognition;
+            if ('webkitSpeechRecognition' in window) {
+                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                recognition = new SpeechRecognition();
+                recognition.continuous = false;
+                recognition.interimResults = false;
+                recognition.lang = 'en-US';
+
+                recognition.onstart = function() {
+                    micBtn.classList.add('listening');
+                    aiCore.classList.add('listening');
+                    aiCoreInner.classList.add('listening');
+                };
+
+                recognition.onerror = function(event) {
+                    micBtn.classList.remove('listening');
+                    aiCore.classList.remove('listening');
+                    aiCoreInner.classList.remove('listening');
+                };
+
+                recognition.onend = function() {
+                    micBtn.classList.remove('listening');
+                    aiCore.classList.remove('listening');
+                    aiCoreInner.classList.remove('listening');
+                };
+
+                recognition.onresult = function(event) {
+                    const transcript = event.results[0][0].transcript;
+                    userInput.value = transcript;
+                    sendMessage();
+                };
+            } else {
+                micBtn.style.display = 'none';
+            }
+
+            // Start the application
+            init();
         });
-    
     </script>
 </body>
 </html>
