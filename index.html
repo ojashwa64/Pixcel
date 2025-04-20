@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="Blue_modern_Design_circle_tech_mcvsdodern_logo_element-removebg-preview.png">
-    <title>Pixcel AI</title>
+    <title>Pixcel.AI</title>
     <style>
         :root {
             --primary: #4a6bff;
@@ -17,7 +17,6 @@
             --user-bubble: rgba(74, 107, 255, 0.2);
             --ai-bubble: rgba(40, 40, 80, 0.5);
             --error: #ff4a6b;
-            --success: #4aff6b;
         }
 
         * {
@@ -77,20 +76,35 @@
             align-items: center;
             animation: pulse 5s ease-in-out infinite;
             margin-right: 15px;
+            transition: all 0.3s ease;
+        }
+
+        .ai-core.listening {
+            animation: pulse 1s ease-in-out infinite, glow 2s ease-in-out infinite;
+            box-shadow: 
+                0 0 40px 15px rgba(113, 100, 255, 0.5),
+                inset 0 0 30px rgba(150, 251, 255, 0.9);
         }
 
         @keyframes pulse {
             0%, 100% { 
-                box-shadow: 
-                    0 0 30px 10px rgba(100, 149, 237, 0.3),
-                    inset 0 0 20px rgba(150, 200, 255, 0.6);
                 transform: scale(1);
             }
             50% { 
-                box-shadow: 
-                    0 0 40px 15px rgba(100, 180, 255, 0.5),
-                    inset 0 0 30px rgba(150, 200, 255, 0.9);
                 transform: scale(1.03);
+            }
+        }
+
+        @keyframes glow {
+            0%, 100% { 
+                box-shadow: 
+                    0 0 40px 15px rgba(100, 255, 252, 0.5),
+                    inset 0 0 30px rgba(150, 237, 255, 0.9);
+            }
+            50% { 
+                box-shadow: 
+                    0 0 50px 20px rgba(120, 156, 255, 0.7),
+                    inset 0 0 40px rgb(180, 253, 255);
             }
         }
 
@@ -111,6 +125,13 @@
             font-size: 24px;
             text-shadow: 
                 0 0 10px rgba(100, 200, 255, 0.8);
+            transition: all 0.3s ease;
+        }
+
+        .ai-core-inner.listening {
+            color: rgba(200, 252, 255, 0.95);
+            text-shadow: 
+                0 0 10px rgba(41, 62, 255, 0.8);
         }
 
         .ai-title {
@@ -130,6 +151,7 @@
             overflow-y: auto;
             scrollbar-width: thin;
             scrollbar-color: var(--primary) transparent;
+            background: linear-gradient(rgba(10, 10, 20, 0.7), rgba(10, 10, 20, 0.9));
         }
 
         .chat-container::-webkit-scrollbar {
@@ -150,11 +172,16 @@
             position: relative;
             animation: fadeIn 0.3s ease-out;
             font-size: 15px;
+            opacity: 0;
+            transform: translateY(10px);
+            animation: fadeInUp 0.4s ease-out forwards;
         }
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+        @keyframes fadeInUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .user-message {
@@ -162,6 +189,7 @@
             border: 1px solid rgba(100, 149, 237, 0.3);
             margin-left: auto;
             border-bottom-right-radius: 5px;
+            animation-delay: 0.1s;
         }
 
         .ai-message {
@@ -169,6 +197,7 @@
             border: 1px solid rgba(80, 100, 150, 0.3);
             margin-right: auto;
             border-bottom-left-radius: 5px;
+            animation-delay: 0.2s;
         }
 
         .command-suggestion {
@@ -184,6 +213,11 @@
 
         .command-suggestion:hover {
             background: rgba(74, 107, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .command-suggestion:active {
+            transform: translateY(0);
         }
 
         .input-area {
@@ -213,7 +247,7 @@
             font-size: 15px;
             box-shadow: 
                 inset 0 0 10px rgba(0, 0, 0, 0.3);
-            transition: all 0.2s;
+            transition: all 0.3s ease;
         }
 
         #user-input:focus {
@@ -236,7 +270,7 @@
             align-items: center;
             justify-content: center;
             border-radius: 50%;
-            transition: all 0.2s;
+            transition: all 0.3s ease;
         }
 
         .mic-btn:hover {
@@ -245,7 +279,7 @@
         }
 
         .mic-btn.listening {
-            color: #ff4a4a;
+            color: var(--error);
             animation: pulse 1.5s infinite;
         }
 
@@ -259,7 +293,7 @@
             font-size: 20px;
             cursor: pointer;
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-            transition: all 0.2s;
+            transition: all 0.3s ease;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -268,10 +302,12 @@
         #send-btn:hover {
             background: linear-gradient(145deg, var(--primary-light) 0%, var(--primary) 100%);
             transform: translateY(-2px);
+            box-shadow: 0 7px 20px rgba(0, 0, 0, 0.4);
         }
 
         #send-btn:active {
             transform: translateY(0);
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
         }
 
         .typing-indicator {
@@ -283,6 +319,7 @@
             width: fit-content;
             border-bottom-left-radius: 5px;
             margin-bottom: 15px;
+            animation: fadeIn 0.3s ease-out;
         }
 
         .typing-dots {
@@ -307,139 +344,19 @@
             30% { transform: translateY(-5px); }
         }
 
-        .message-content {
-            white-space: pre-wrap;
-            word-wrap: break-word;
-        }
-
-        .message-content code {
-            background: rgba(0, 0, 0, 0.3);
-            padding: 2px 4px;
-            border-radius: 4px;
-            font-family: monospace;
-            font-size: 0.9em;
-        }
-
-        .message-content pre {
-            background: rgba(0, 0, 0, 0.3);
-            padding: 10px;
-            border-radius: 8px;
-            overflow-x: auto;
-            margin: 10px 0;
-        }
-
-        .message-content pre code {
-            background: transparent;
-            padding: 0;
-        }
-
-        .message-content a {
-            color: var(--primary-light);
-            text-decoration: none;
-        }
-
-        .message-content a:hover {
-            text-decoration: underline;
-        }
-
-        .message-content ul, 
-        .message-content ol {
-            padding-left: 20px;
-            margin: 10px 0;
-        }
-
-        .message-content li {
-            margin-bottom: 5px;
-        }
-
-        .message-content table {
-            border-collapse: collapse;
-            margin: 10px 0;
-            width: 100%;
-        }
-
-        .message-content th, 
-        .message-content td {
-            border: 1px solid rgba(255, 255, 255, 0.1);
+        .status-message {
+            text-align: center;
             padding: 8px;
-            text-align: left;
-        }
-
-        .message-content th {
-            background-color: rgba(74, 107, 255, 0.2);
-        }
-
-        .message-content blockquote {
-            border-left: 3px solid var(--primary);
-            padding-left: 10px;
-            margin: 10px 0;
+            margin: 10px auto;
+            font-size: 13px;
             color: var(--text-dim);
-        }
-
-        .message-timestamp {
-            font-size: 11px;
-            color: var(--text-dim);
-            margin-top: 5px;
-            text-align: right;
+            animation: fadeIn 0.5s ease-out;
         }
 
         .error-message {
             color: var(--error);
             background: rgba(255, 74, 107, 0.1);
             border: 1px solid rgba(255, 74, 107, 0.3);
-        }
-
-        .success-message {
-            color: var(--success);
-            background: rgba(74, 255, 107, 0.1);
-            border: 1px solid rgba(74, 255, 107, 0.3);
-        }
-
-        .info-message {
-            color: var(--primary-light);
-            background: rgba(74, 107, 255, 0.1);
-            border: 1px solid rgba(74, 107, 255, 0.3);
-        }
-
-        .message-actions {
-            display: flex;
-            gap: 8px;
-            margin-top: 10px;
-            justify-content: flex-end;
-        }
-
-        .message-action {
-            background: rgba(255, 255, 255, 0.1);
-            border: none;
-            color: var(--text-dim);
-            padding: 4px 8px;
-            border-radius: 12px;
-            font-size: 12px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .message-action:hover {
-            background: rgba(255, 255, 255, 0.2);
-            color: var(--text);
-        }
-
-        .copy-success {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            background: var(--success);
-            color: white;
-            padding: 10px 20px;
-            border-radius: 5px;
-            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
-            opacity: 0;
-            transition: opacity 0.3s;
-            z-index: 1000;
-        }
-
-        .copy-success.show {
-            opacity: 1;
         }
 
         @media (max-width: 600px) {
@@ -469,22 +386,25 @@
 <body>
     <div class="chat-app">
         <div class="ai-header">
-            <div class="ai-core">
-                <div class="ai-core-inner">AI</div>
+            <div class="ai-core" id="ai-core">
+                <div class="ai-core-inner" id="ai-core-inner">AI</div>
             </div>
             <div>
                 <div class="ai-title">Pixcel.AI</div>
-                <div class="ai-subtitle">Ask me anything - I can explain, analyze, and help with various topics</div>
+                <div class="ai-subtitle">Try saying: "Hello", "What time is it?", "Search for cats"</div>
             </div>
         </div>
 
         <div class="chat-container" id="chat-area">
             <div class="message ai-message">
-                <div class="message-content">Hello! I'm your advanced AI assistant. I can help with a wide range of topics including:</div>
+                Hello! I'm your AI assistant. You can talk to me or type commands like:
                 <div style="margin-top: 10px;">
-                    
+                    <span class="command-suggestion">Hello</span>
+                    <span class="command-suggestion">What time is it?</span>
+                    <span class="command-suggestion">What's today's date?</span>
+                    <span class="command-suggestion">Search for cats</span>
+                    <span class="command-suggestion">Help</span>
                 </div>
-                <div class="message-timestamp">Just now</div>
             </div>
         </div>
 
@@ -513,8 +433,6 @@
                 </svg>
             </button>
         </div>
-
-        <div class="copy-success" id="copy-success">Copied to clipboard!</div>
     </div>
 
     <script>
@@ -524,13 +442,28 @@
             const sendBtn = document.getElementById('send-btn');
             const micBtn = document.getElementById('mic-btn');
             const typingIndicator = document.getElementById('typing-indicator');
+            const aiCore = document.getElementById('ai-core');
+            const aiCoreInner = document.getElementById('ai-core-inner');
             const commandSuggestions = document.querySelectorAll('.command-suggestion');
-            const copySuccess = document.getElementById('copy-success');
 
-            // Conversation history
-            let conversationHistory = [
-                { role: "system", content: "You are a helpful AI assistant called Pixcel.AI. You provide detailed, accurate, and helpful responses to user queries. You can explain complex concepts, write code, help with problem solving, and engage in general conversation. Format your responses with proper markdown when appropriate (for code, lists, tables, etc.)." }
-            ];
+            // Initialize speech synthesis
+            const synth = window.speechSynthesis;
+            let voices = [];
+            
+            function populateVoices() {
+                voices = synth.getVoices();
+                // Prefer natural-sounding voices
+                voices.sort((a, b) => {
+                    const aQuality = a.name.includes('Natural') ? 1 : 0;
+                    const bQuality = b.name.includes('Natural') ? 1 : 0;
+                    return bQuality - aQuality;
+                });
+            }
+            
+            populateVoices();
+            if (speechSynthesis.onvoiceschanged !== undefined) {
+                speechSynthesis.onvoiceschanged = populateVoices;
+            }
 
             // Add click handlers for command suggestions
             commandSuggestions.forEach(suggestion => {
@@ -553,18 +486,26 @@
 
                 recognition.onstart = function() {
                     micBtn.classList.add('listening');
+                    aiCore.classList.add('listening');
+                    aiCoreInner.classList.add('listening');
                     userInput.placeholder = "Listening...";
+                    addStatusMessage("Listening... Speak now");
                 };
 
                 recognition.onerror = function(event) {
                     console.error('Speech recognition error', event.error);
                     micBtn.classList.remove('listening');
+                    aiCore.classList.remove('listening');
+                    aiCoreInner.classList.remove('listening');
                     userInput.placeholder = "Ask me anything...";
-                    addMessage("Sorry, I couldn't hear you. Please try again.", false);
+                    addMessage(`Sorry, I couldn't hear you. ${event.error === 'no-speech' ? 'No speech detected.' : 'Please try again.'}`, false);
+                    addStatusMessage("Click microphone to try again", true);
                 };
 
                 recognition.onend = function() {
                     micBtn.classList.remove('listening');
+                    aiCore.classList.remove('listening');
+                    aiCoreInner.classList.remove('listening');
                     userInput.placeholder = "Ask me anything...";
                 };
 
@@ -575,46 +516,7 @@
                 };
             } else {
                 micBtn.style.display = 'none';
-            }
-
-            // Format response with markdown
-            function formatResponse(text) {
-                // Simple markdown parsing for demo purposes
-                // In a real app, you'd use a proper markdown library
-                
-                // Headers
-                text = text.replace(/^# (.*$)/gm, '<h1>$1</h1>');
-                text = text.replace(/^## (.*$)/gm, '<h2>$1</h2>');
-                text = text.replace(/^### (.*$)/gm, '<h3>$1</h3>');
-                
-                // Bold and italic
-                text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-                text = text.replace(/\*(.*?)\*/g, '<em>$1</em>');
-                text = text.replace(/_([^_]+)_/g, '<em>$1</em>');
-                
-                // Code blocks
-                text = text.replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>');
-                text = text.replace(/`([^`]+)`/g, '<code>$1</code>');
-                
-                // Links
-                text = text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>');
-                
-                // Lists
-                text = text.replace(/^\s*\*\s(.*$)/gm, '<li>$1</li>');
-                text = text.replace(/^\s*-\s(.*$)/gm, '<li>$1</li>');
-                text = text.replace(/^\s*\+\s(.*$)/gm, '<li>$1</li>');
-                text = text.replace(/^\s*\d+\.\s(.*$)/gm, '<li>$1</li>');
-                
-                // Blockquotes
-                text = text.replace(/^>\s(.*$)/gm, '<blockquote>$1</blockquote>');
-                
-                // Horizontal rule
-                text = text.replace(/^---$/gm, '<hr>');
-                
-                // Paragraphs
-                text = text.replace(/\n\n/g, '<br><br>');
-                
-                return text;
+                addStatusMessage("Voice input not supported in your browser", true);
             }
 
             // Add message to chat
@@ -622,57 +524,46 @@
                 const messageDiv = document.createElement('div');
                 messageDiv.classList.add('message');
                 messageDiv.classList.add(isUser ? 'user-message' : 'ai-message');
-                
-                const contentDiv = document.createElement('div');
-                contentDiv.classList.add('message-content');
-                contentDiv.innerHTML = isUser ? text : formatResponse(text);
-                messageDiv.appendChild(contentDiv);
-                
-                // Add timestamp
-                const timestampDiv = document.createElement('div');
-                timestampDiv.classList.add('message-timestamp');
-                const now = new Date();
-                timestampDiv.textContent = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                messageDiv.appendChild(timestampDiv);
-                
-                // Add copy button for AI messages
-                if (!isUser) {
-                    const actionsDiv = document.createElement('div');
-                    actionsDiv.classList.add('message-actions');
-                    
-                    const copyBtn = document.createElement('button');
-                    copyBtn.classList.add('message-action');
-                    copyBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg> Copy';
-                    copyBtn.addEventListener('click', function() {
-                        navigator.clipboard.writeText(text).then(() => {
-                            copySuccess.classList.add('show');
-                            setTimeout(() => {
-                                copySuccess.classList.remove('show');
-                            }, 2000);
-                        });
-                    });
-                    
-                    actionsDiv.appendChild(copyBtn);
-                    messageDiv.appendChild(actionsDiv);
-                }
-                
-                chatArea.appendChild(messageDiv);
-                chatArea.scrollTop = chatArea.scrollHeight;
-                
-                // Add to conversation history
-                conversationHistory.push({
-                    role: isUser ? "user" : "assistant",
-                    content: text
-                });
-            }
-
-            // Add error message
-            function addErrorMessage(text) {
-                const messageDiv = document.createElement('div');
-                messageDiv.classList.add('message', 'error-message');
                 messageDiv.textContent = text;
                 chatArea.appendChild(messageDiv);
                 chatArea.scrollTop = chatArea.scrollHeight;
+                
+                // Speak AI responses
+                if (!isUser) {
+                    speakResponse(text);
+                }
+            }
+            
+            // Add status message
+            function addStatusMessage(text, isError = false) {
+                const statusDiv = document.createElement('div');
+                statusDiv.classList.add('status-message');
+                if (isError) statusDiv.classList.add('error-message');
+                statusDiv.textContent = text;
+                chatArea.appendChild(statusDiv);
+                chatArea.scrollTop = chatArea.scrollHeight;
+            }
+
+            // Speak response
+            function speakResponse(text) {
+                if (synth.speaking) {
+                    synth.cancel();
+                }
+                
+                const utterance = new SpeechSynthesisUtterance(text);
+                
+                // Select the best available voice
+                if (voices.length > 0) {
+                    utterance.voice = voices[0]; // Use the first (preferred) voice
+                    utterance.pitch = 1.1;
+                    utterance.rate = 0.9;
+                    utterance.volume = 1;
+                }
+                
+                // Add natural pauses
+                text = text.replace(/([,.?!])/g, '$1 ');
+                
+                synth.speak(utterance);
             }
 
             // Handle commands
@@ -689,31 +580,59 @@
                     day: 'numeric' 
                 });
                 
-                if (command.includes('hello') || command.includes('hi') || command.includes('hey')) {
-                    return `Hello there! I'm Pixcel.AI, your advanced AI assistant. How can I help you today?`;
+                // Navigation commands
+                if (command.includes('scroll up')) {
+                    window.scrollBy(0, -200);
+                    return "Scrolled up";
+                }
+                else if (command.includes('scroll down')) {
+                    window.scrollBy(0, 200);
+                    return "Scrolled down";
+                }
+                else if (command.includes('go back')) {
+                    window.history.back();
+                    return "Going back";
+                }
+                else if (command.includes('go forward')) {
+                    window.history.forward();
+                    return "Going forward";
+                }
+                else if (command.startsWith('search for') || command.startsWith('look up')) {
+                    const query = command.replace(/^(search for|look up)/, '').trim();
+                    if (query) {
+                        window.open(`https://www.google.com/search?q=${encodeURIComponent(query)}`, '_blank');
+                        return `Searching for ${query}`;
+                    }
+                }
+                // Basic commands
+                else if (command.includes('hello') || command.includes('hi') || command.includes('hey')) {
+                    const greetings = [
+                        "Hello there! How can I assist you today?",
+                        "Hi! What can I do for you?",
+                        "Hey! How can I help?",
+                        "Greetings! How may I be of service?"
+                    ];
+                    return greetings[Math.floor(Math.random() * greetings.length)];
                 } 
                 else if (command.includes('time')) {
-                    return `The current time is **${timeString}**`;
+                    return `The current time is ${timeString}`;
                 }
                 else if (command.includes('date') || command.includes('today')) {
-                    return `Today is **${dateString}**`;
+                    return `Today is ${dateString}`;
                 }
-                else if (command.includes('thank')) {
-                    return `You're welcome! Is there anything else I can help you with?`;
-                }
-                else if (command.includes('who are you') || command.includes('what are you')) {
-                    return `I'm Pixcel.AI, an artificial intelligence assistant designed to help with a wide range of tasks. I can explain concepts, solve problems, generate creative content, and much more!`;
+                else if (command.includes('weather')) {
+                    return `I can't check real-time weather, but you can ask me about weather concepts or look up your local weather online.`;
                 }
                 else if (command.includes('help')) {
-                    return `Here are some things I can help with:
-- **General Knowledge**: Explain concepts, provide definitions, summarize topics
-- **Math & Science**: Solve equations, explain theories, help with homework
-- **Programming**: Write and explain code in various languages
-- **Writing**: Help with essays, creative writing, editing
-- **Productivity**: Time management tips, organization strategies
-- **Current Information**: Time, date, basic facts
-
-Try asking me anything specific!`;
+                    return `I can respond to these commands:
+- Hello/Hi/Hey
+- What time is it?
+- What's today's date?
+- How's the weather?
+- Search for [anything]
+- Scroll up/down
+- Go back/forward
+- Help (to see this message)`;
                 }
                 else {
                     return null; // No specific command matched
@@ -734,108 +653,21 @@ Try asking me anything specific!`;
                 
                 try {
                     // Simulate API delay for non-command responses
-                    await new Promise(resolve => setTimeout(resolve, 800 + Math.random() * 800));
+                    await new Promise(resolve => setTimeout(resolve, 800 + Math.random() * 1000));
                     
-                    // In a real implementation, you would call an actual AI API here
-                    // For this demo, we'll simulate different types of responses based on the query
-                    
-                    // Math problems
-                    if (userMessage.match(/\d+[\+\-\*\/]\d+/)) {
-                        try {
-                            const result = eval(userMessage.replace(/[^0-9\+\-\*\/\(\)\.]/g, ''));
-                            return `The result of \`${userMessage}\` is **${result}**`;
-                        } catch {
-                            // Fall through to general response
-                        }
-                    }
-                    
-                    // Programming questions
-                    if (userMessage.toLowerCase().includes('code') || 
-                        userMessage.toLowerCase().includes('function') || 
-                        userMessage.toLowerCase().includes('program')) {
-                        
-                        const languages = ['Python', 'JavaScript', 'Java', 'C++', 'C#', 'PHP', 'Ruby', 'Go'];
-                        const randomLang = languages[Math.floor(Math.random() * languages.length)];
-                        
-                        if (userMessage.toLowerCase().includes('python')) {
-                            return `Here's a Python solution for your request:\n\n\`\`\`python\ndef solution():\n    # ${userMessage}\n    result = None  # Implement your solution here\n    return result\n\`\`\`\n\nWould you like me to explain any specific part of this?`;
-                        }
-                        
-                        if (userMessage.toLowerCase().includes('javascript')) {
-                            return `Here's a JavaScript solution:\n\n\`\`\`javascript\nfunction solution() {\n    // ${userMessage}\n    let result = null; // Implement your solution here\n    return result;\n}\n\`\`\`\n\nWould you like me to modify this in any way?`;
-                        }
-                        
-                        return `For programming questions, I can provide code examples in various languages. Here's a template in ${randomLang}:\n\n\`\`\`${randomLang.toLowerCase()}\n// ${userMessage}\n// Implement your solution here\n\`\`\`\n\nWould you like me to provide a more specific solution?`;
-                    }
-                    
-                    // Definition questions
-                    if (userMessage.toLowerCase().startsWith('what is') || 
-                        userMessage.toLowerCase().startsWith('define')) {
-                        
-                        const term = userMessage.replace(/what is|define/gi, '').trim();
-                        return `**${term.charAt(0).toUpperCase() + term.slice(1)}** refers to ${getRandomDefinition()}. ${getRandomAdditionalInfo()}`;
-                    }
-                    
-                    // General knowledge response
+                    // For demo purposes - replace with actual API call
                     const responses = [
-                        `Regarding "${userMessage}", here's what I can share:\n\n${getDetailedResponse()}`,
-                        `Interesting question about ${userMessage.split(' ')[0]}. Based on my knowledge:\n\n${getDetailedResponse()}`,
-                        `Let me explain ${userMessage}:\n\n${getDetailedResponse()}`,
-                        `Here's a comprehensive answer to your question about ${userMessage}:\n\n${getDetailedResponse()}`,
-                        `I've analyzed your query about ${userMessage}. Here's what I found:\n\n${getDetailedResponse()}`
+                        `I understand you're asking about "${userMessage}". Here's what I found...`,
+                        `Regarding "${userMessage}", my analysis suggests...`,
+                        `Interesting question about ${userMessage}. Based on my knowledge...`,
+                        `I've processed your query about ${userMessage}. Here's the information...`,
+                        `Thanks for asking about ${userMessage}. Here's what I can share...`
                     ];
                     
                     return responses[Math.floor(Math.random() * responses.length)];
                 } finally {
                     typingIndicator.style.display = 'none';
                 }
-            }
-
-            // Helper functions for generating realistic responses
-            function getRandomDefinition() {
-                const definitions = [
-                    "a complex concept with multiple interpretations depending on context",
-                    "a term used across several disciplines with slightly different meanings in each",
-                    "an important idea that has evolved over time",
-                    "a fundamental principle in its field of study",
-                    "a phenomenon that researchers continue to investigate"
-                ];
-                return definitions[Math.floor(Math.random() * definitions.length)];
-            }
-
-            function getRandomAdditionalInfo() {
-                const additions = [
-                    "Recent studies have shown new perspectives on this topic.",
-                    "The understanding of this has changed significantly in the past decade.",
-                    "There are several competing theories about this.",
-                    "This is a foundational concept that leads to more advanced topics.",
-                    "Many practical applications stem from this idea."
-                ];
-                return additions[Math.floor(Math.random() * additions.length)];
-            }
-
-            function getDetailedResponse() {
-                const paragraphs = [
-                    "The subject in question involves multiple factors that interact in complex ways. Research indicates that the primary components include structural elements, dynamic processes, and contextual influences. When examining this through different theoretical lenses, we can identify patterns that help explain observed phenomena.",
-                    
-                    "Historically, this concept emerged from early work in the field, with key contributions from several prominent researchers. The timeline of development shows how understanding has evolved from initial simple models to today's more nuanced frameworks that account for a wider range of variables.",
-                    
-                    "Practical applications are numerous, including uses in technology, medicine, and social systems. Implementation challenges often arise from the need to balance competing priorities while maintaining core functionality across diverse environments.",
-                    
-                    "Comparative analysis reveals interesting similarities and differences with related concepts. These relationships help clarify boundaries and highlight unique characteristics that define the subject's distinctive qualities.",
-                    
-                    "Future directions for research and application include exploring novel combinations with emerging technologies, addressing current limitations through innovative approaches, and expanding the scope of potential benefits to new domains."
-                ];
-                
-                // Return 2-3 random paragraphs
-                const count = 2 + Math.floor(Math.random() * 2);
-                const selected = [];
-                while (selected.length < count) {
-                    const p = paragraphs[Math.floor(Math.random() * paragraphs.length)];
-                    if (!selected.includes(p)) selected.push(p);
-                }
-                
-                return selected.join("\n\n");
             }
 
             // Handle send message
@@ -846,14 +678,9 @@ Try asking me anything specific!`;
                     addMessage(message, true);
                     userInput.value = '';
                     
-                    try {
-                        // Get AI response
-                        const aiResponse = await getAIResponse(message);
-                        addMessage(aiResponse, false);
-                    } catch (error) {
-                        console.error('Error getting AI response:', error);
-                        addErrorMessage("Sorry, I encountered an error processing your request. Please try again.");
-                    }
+                    // Get AI response
+                    const aiResponse = await getAIResponse(message);
+                    addMessage(aiResponse, false);
                 }
             }
 
@@ -871,15 +698,21 @@ Try asking me anything specific!`;
                     if (micBtn.classList.contains('listening')) {
                         recognition.stop();
                     } else {
-                        recognition.start();
+                        try {
+                            recognition.start();
+                        } catch (e) {
+                            addStatusMessage("Error starting voice recognition. Please try again.", true);
+                        }
                     }
                 } else {
-                    addErrorMessage("Sorry, voice input is not supported in your browser.");
+                    addMessage("Sorry, voice input is not supported in your browser.", false);
                 }
             });
-
-            // Focus input on load
-            userInput.focus();
+            
+            // Initial greeting
+            setTimeout(() => {
+                speakResponse("Welcome to Pixcel AI! You can talk to me by clicking the microphone button or typing your questions.");
+            }, 1000);
         });
     </script>
 </body>
