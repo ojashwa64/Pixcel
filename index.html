@@ -358,6 +358,55 @@
             border: 1px solid rgba(255, 74, 107, 0.3);
         }
 
+        .sleep-mode {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(10, 10, 30, 0.9);
+            z-index: 2000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(5px);
+            transition: all 0.5s ease;
+            color: rgba(255,255,255,0.8);
+        }
+        
+        .wake-hint {
+            font-size: 24px;
+            margin-bottom: 30px;
+            text-shadow: 0 0 10px rgba(100, 149, 237, 0.7);
+            animation: fadeInOut 3s infinite;
+        }
+        
+        @keyframes fadeInOut {
+            0%, 100% { opacity: 0.6; }
+            50% { opacity: 1; }
+        }
+        
+        .pulse-circle {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: rgba(74, 107, 255, 0.1);
+            border: 2px solid rgba(74, 107, 255, 0.3);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            animation: pulse 2s infinite;
+        }
+        
+        .inner-circle {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--primary);
+            box-shadow: 0 0 20px var(--primary);
+        }
+
         @media (max-width: 600px) {
             .chat-app {
                 height: 100vh;
@@ -390,18 +439,31 @@
             </div>
             <div>
                 <div class="ai-title">Pixel.AI</div>
+<<<<<<< HEAD
                 <div class="ai-subtitle">Try commands like: "Open YouTube", "What time is it?"</div>
+=======
+                <div class="ai-subtitle">Try saying: "Hey Pixel", "Open YouTube", "What time is it?"</div>
+>>>>>>> 9acf1f627c297bc5e980343e3cda6aef9286cc63
             </div>
         </div>
 
         <div class="chat-container" id="chat-area">
             <div class="message ai-message">
+<<<<<<< HEAD
                 Hello! I'm your AI assistant. Try commands like:
                 <div style="margin-top: 10px;">
                     <span class="command-suggestion">Open YouTube</span>
                     <span class="command-suggestion">What time is it?</span>
                     <span class="command-suggestion">Search for cats</span>
                     <span class="command-suggestion">Open calculator</span>
+=======
+                Hello! I'm your AI assistant. Say "Hey Pixel" to wake me or try commands like:
+                <div style="margin-top: 10px;">
+                    <span class="command-suggestion">Hey Pixel</span>
+                    <span class="command-suggestion">Open YouTube</span>
+                    <span class="command-suggestion">What time is it?</span>
+                    <span class="command-suggestion">Goodbye</span>
+>>>>>>> 9acf1f627c297bc5e980343e3cda6aef9286cc63
                 </div>
             </div>
         </div>
@@ -432,6 +494,17 @@
             </button>
         </div>
     </div>
+<<<<<<< HEAD
+=======
+    
+    <div class="sleep-mode" id="sleep-mode">
+        <div class="wake-hint">Say "Hey Pixel"</div>
+        <div class="pulse-circle">
+            <div class="inner-circle"></div>
+        </div>
+    </div>
+
+>>>>>>> 9acf1f627c297bc5e980343e3cda6aef9286cc63
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const chatArea = document.getElementById('chat-area');
@@ -439,9 +512,11 @@
             const sendBtn = document.getElementById('send-btn');
             const micBtn = document.getElementById('mic-btn');
             const typingIndicator = document.getElementById('typing-indicator');
+            const sleepMode = document.getElementById('sleep-mode');
             const aiCore = document.getElementById('ai-core');
             const aiCoreInner = document.getElementById('ai-core-inner');
             const commandSuggestions = document.querySelectorAll('.command-suggestion');
+<<<<<<< HEAD
             
             // Performance optimization
             const messageCache = new Map();
@@ -544,6 +619,148 @@
                 // Cache the utterance
                 messageCache.set(text, utterance);
                 synth.speak(utterance);
+=======
+
+            // Voice assistant settings
+            const WAKE_PHRASE = "hey pixel";
+            const GOODBYE_PHRASES = ["goodbye", "bye", "see you", "sleep now"];
+            let isAwake = false;
+            let continuousRecognition;
+            let sleepTimer;
+            let femaleVoice = null;
+            
+            // Initialize speech synthesis
+            const synth = window.speechSynthesis;
+            let voices = [];
+
+            function populateVoices() {
+                voices = synth.getVoices();
+                // Find the most natural female voice
+                femaleVoice = voices.find(v => 
+                    v.name.includes('Female') || 
+                    v.name.includes('Woman') ||
+                    v.name.includes('female') ||
+                    v.name.includes('woman')
+                ) || voices[0];
+                
+                if (femaleVoice) {
+                    console.log('Selected voice:', femaleVoice.name);
+                }
+            }
+
+            // Configure smooth female voice
+            function speakResponse(text) {
+                if (synth.speaking) synth.cancel();
+                
+                const utterance = new SpeechSynthesisUtterance(text);
+                
+                if (femaleVoice) {
+                    utterance.voice = femaleVoice;
+                    utterance.pitch = 1.1;  // Slightly higher pitch
+                    utterance.rate = 0.85;  // Slower speaking rate
+                    utterance.volume = 1;
+                }
+                
+                // Add natural pauses for more fluid speech
+                utterance.text = text
+                    .replace(/,/g, ',<break time="300ms"/>')
+                    .replace(/\./g, '.<break time="400ms"/>')
+                    .replace(/\?/g, '?<break time="500ms"/>');
+                
+                synth.speak(utterance);
+            }
+
+            // Add message to chat
+            function addMessage(text, isUser) {
+                const messageDiv = document.createElement('div');
+                messageDiv.classList.add('message');
+                messageDiv.classList.add(isUser ? 'user-message' : 'ai-message');
+                messageDiv.textContent = text;
+                chatArea.appendChild(messageDiv);
+                chatArea.scrollTop = chatArea.scrollHeight;
+                
+                if (!isUser) {
+                    speakResponse(text);
+                }
+            }
+
+            // Initialize continuous recognition for wake word detection
+            function initWakeWordDetection() {
+                if (!('webkitSpeechRecognition' in window)) {
+                    console.log("Wake word detection not supported");
+                    addMessage("Voice wake-up not supported in your browser. Please use the microphone button.", false);
+                    return;
+                }
+                
+                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                continuousRecognition = new SpeechRecognition();
+                continuousRecognition.continuous = true;
+                continuousRecognition.interimResults = false;
+                continuousRecognition.lang = 'en-US';
+                
+                continuousRecognition.onresult = (event) => {
+                    const transcript = event.results[event.results.length-1][0].transcript.toLowerCase();
+                    
+                    if (!isAwake && transcript.includes(WAKE_PHRASE)) {
+                        wakeUp();
+                    }
+                    else if (isAwake && GOODBYE_PHRASES.some(phrase => transcript.includes(phrase))) {
+                        sayGoodbye();
+                    }
+                    else if (isAwake) {
+                        processVoiceCommand(transcript);
+                    }
+                };
+                
+                continuousRecognition.onerror = (event) => {
+                    if (event.error === 'no-speech') {
+                        continuousRecognition.start();
+                    }
+                };
+                
+                continuousRecognition.onend = () => {
+                    if (!isAwake) continuousRecognition.start();
+                };
+                
+                continuousRecognition.start();
+            }
+
+            function wakeUp() {
+                isAwake = true;
+                sleepMode.style.display = 'none';
+                resetSleepTimer();
+                
+                speakResponse("Hello there, I'm Pixel. How can I assist you today?");
+                addMessage("Pixel: Hello there, I'm Pixel. How can I assist you today?", false);
+            }
+
+            function sayGoodbye() {
+                speakResponse("Goodbye for now. Just say 'Hey Pixel' whenever you need me.");
+                addMessage("Pixel: Goodbye for now. Just say 'Hey Pixel' whenever you need me.", false);
+                sleep();
+            }
+
+            function sleep() {
+                isAwake = false;
+                sleepMode.style.display = 'flex';
+                if (continuousRecognition) continuousRecognition.start();
+            }
+
+            function resetSleepTimer() {
+                clearTimeout(sleepTimer);
+                sleepTimer = setTimeout(() => {
+                    if (isAwake) {
+                        speakResponse("I'll be going to sleep now. Just say 'Hey Pixel' to wake me.");
+                        addMessage("Pixel: I'll be going to sleep now. Just say 'Hey Pixel' to wake me.", false);
+                        sleep();
+                    }
+                }, 120000); // 2 minutes
+            }
+
+            function processVoiceCommand(command) {
+                userInput.value = command;
+                sendMessage();
+>>>>>>> 9acf1f627c297bc5e980343e3cda6aef9286cc63
             }
     
             // Optimized message adding with batch DOM updates
@@ -622,6 +839,7 @@
                     day: 'numeric' 
                 });
                 
+<<<<<<< HEAD
                 // WhatsApp commands
                 if (command.includes('send whatsapp') || command.includes('whatsapp message')) {
                     const match = command.match(/send whatsapp (?:message )?to (\w+)(?: saying (.+))?/i) || 
@@ -666,6 +884,35 @@
                 
                 // Navigation commands
                 if (command.includes('scroll up')) {
+=======
+                // Application control commands
+                if (command.includes('open youtube') || command.includes('launch youtube')) {
+                    window.open('https://www.youtube.com', '_blank');
+                    return "Opening YouTube for you";
+                }
+                else if (command.includes('open google') || command.includes('launch google')) {
+                    window.open('https://www.google.com', '_blank');
+                    return "Opening Google for you";
+                }
+                else if (command.includes('open gmail') || command.includes('launch gmail')) {
+                    window.open('https://mail.google.com', '_blank');
+                    return "Opening Gmail for you";
+                }
+                else if (command.includes('open calculator')) {
+                    window.open('https://www.google.com/search?q=calculator', '_blank');
+                    return "Opening calculator for you";
+                }
+                else if (command.includes('open maps') || command.includes('launch maps')) {
+                    window.open('https://www.google.com/maps', '_blank');
+                    return "Opening Google Maps for you";
+                }
+                else if (command.includes('open calendar') || command.includes('launch calendar')) {
+                    window.open('https://calendar.google.com', '_blank');
+                    return "Opening Google Calendar for you";
+                }
+                // Navigation commands
+                else if (command.includes('scroll up')) {
+>>>>>>> 9acf1f627c297bc5e980343e3cda6aef9286cc63
                     window.scrollBy(0, -200);
                     return "Scrolled up";
                 }
@@ -717,6 +964,7 @@
                 }
                 else if (command.includes('help')) {
                     return `I can respond to these commands:
+<<<<<<< HEAD
     - Open/launch [YouTube, Google, Gmail, Maps, Calendar, Calculator]
     - Search for [anything]
     - Search YouTube for [videos]
@@ -729,10 +977,27 @@
     - What time is it?
     - What's today's date?
     - How's the weather?`;
+=======
+- "Hey Pixel" (wake me up)
+- Open/launch [YouTube, Google, Gmail, Maps, Calendar, Calculator]
+- Search for [anything]
+- Search YouTube for [videos]
+- Scroll up/down
+- Go back/forward
+- Refresh/reload
+- What time is it?
+- What's today's date?
+- How's the weather?
+- Goodbye (put me to sleep)`;
+                }
+                else {
+                    return null; // No specific command matched
+>>>>>>> 9acf1f627c297bc5e980343e3cda6aef9286cc63
                 }
                 
                 return null;
             }
+<<<<<<< HEAD
     
             // Optimized AI response with caching
             async function getAIResponse(userMessage) {
@@ -745,6 +1010,14 @@
                 const commandResponse = handleCommand(userMessage);
                 if (commandResponse) {
                     messageCache.set(userMessage, commandResponse);
+=======
+
+            // Get AI response
+            async function getAIResponse(userMessage) {
+                // First check for commands
+                const commandResponse = handleCommand(userMessage);
+                if (commandResponse) {
+>>>>>>> 9acf1f627c297bc5e980343e3cda6aef9286cc63
                     return commandResponse;
                 }
                 
@@ -753,6 +1026,7 @@
                 chatArea.scrollTop = chatArea.scrollHeight;
                 
                 try {
+<<<<<<< HEAD
                     // Simulate API delay with minimum wait
                     await Promise.all([
                         new Promise(resolve => setTimeout(resolve, 500)),
@@ -765,10 +1039,26 @@
                     return response;
                 } catch (error) {
                     return commonResponses.errors[Math.floor(Math.random() * commonResponses.errors.length)];
+=======
+                    // Simulate API delay for non-command responses
+                    await new Promise(resolve => setTimeout(resolve, 800 + Math.random() * 1000));
+                    
+                    // For demo purposes - replace with actual API call
+                    const responses = [
+                        `I understand you're asking about "${userMessage}". Here's what I found...`,
+                        `Regarding "${userMessage}", my analysis suggests...`,
+                        `Interesting question about ${userMessage}. Based on my knowledge...`,
+                        `I've processed your query about ${userMessage}. Here's the information...`,
+                        `Thanks for asking about ${userMessage}. Here's what I can share...`
+                    ];
+                    
+                    return responses[Math.floor(Math.random() * responses.length)];
+>>>>>>> 9acf1f627c297bc5e980343e3cda6aef9286cc63
                 } finally {
                     typingIndicator.style.display = 'none';
                 }
             }
+<<<<<<< HEAD
     
             function simulateAPICall(query) {
                 // Simulate network request
@@ -808,6 +1098,42 @@
             }
     
             // Event listeners with optimizations
+=======
+
+            // Handle send message
+            async function sendMessage() {
+                const message = userInput.value.trim();
+                if (message) {
+                    addMessage(message, true);
+                    userInput.value = '';
+                    resetSleepTimer();
+                    
+                    const aiResponse = await getAIResponse(message);
+                    addMessage(aiResponse, false);
+                }
+            }
+
+            // Initialize the app
+            function init() {
+                populateVoices();
+                if (speechSynthesis.onvoiceschanged !== undefined) {
+                    speechSynthesis.onvoiceschanged = populateVoices;
+                }
+                
+                // Start in sleep mode
+                sleep();
+                
+                // Initialize wake word detection
+                setTimeout(initWakeWordDetection, 1000);
+                
+                // Initial silent greeting
+                setTimeout(() => {
+                    addMessage("Pixel: I'm Pixel, your voice assistant. Say 'Hey Pixel' to wake me.", false);
+                }, 1500);
+            }
+
+            // Event listeners
+>>>>>>> 9acf1f627c297bc5e980343e3cda6aef9286cc63
             sendBtn.addEventListener('click', sendMessage);
             
             userInput.addEventListener('keypress', function(e) {
@@ -815,8 +1141,30 @@
                     sendMessage();
                 }
             });
+<<<<<<< HEAD
     
             // Optimized speech recognition
+=======
+
+            micBtn.addEventListener('click', function() {
+                if (isAwake) {
+                    resetSleepTimer();
+                    if (recognition) {
+                        recognition.start();
+                    }
+                }
+            });
+
+            // Initialize click handlers for command suggestions
+            commandSuggestions.forEach(suggestion => {
+                suggestion.addEventListener('click', function() {
+                    userInput.value = this.textContent;
+                    userInput.focus();
+                });
+            });
+
+            // Initialize speech recognition for button
+>>>>>>> 9acf1f627c297bc5e980343e3cda6aef9286cc63
             let recognition;
             if ('webkitSpeechRecognition' in window) {
                 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -824,26 +1172,42 @@
                 recognition.continuous = false;
                 recognition.interimResults = false;
                 recognition.lang = 'en-US';
+<<<<<<< HEAD
                 recognition.maxAlternatives = 1;
     
+=======
+
+>>>>>>> 9acf1f627c297bc5e980343e3cda6aef9286cc63
                 recognition.onstart = function() {
                     micBtn.classList.add('listening');
                     aiCore.classList.add('listening');
                     aiCoreInner.classList.add('listening');
                 };
+<<<<<<< HEAD
     
+=======
+
+>>>>>>> 9acf1f627c297bc5e980343e3cda6aef9286cc63
                 recognition.onerror = function(event) {
                     micBtn.classList.remove('listening');
                     aiCore.classList.remove('listening');
                     aiCoreInner.classList.remove('listening');
                 };
+<<<<<<< HEAD
     
+=======
+
+>>>>>>> 9acf1f627c297bc5e980343e3cda6aef9286cc63
                 recognition.onend = function() {
                     micBtn.classList.remove('listening');
                     aiCore.classList.remove('listening');
                     aiCoreInner.classList.remove('listening');
                 };
+<<<<<<< HEAD
     
+=======
+
+>>>>>>> 9acf1f627c297bc5e980343e3cda6aef9286cc63
                 recognition.onresult = function(event) {
                     const transcript = event.results[0][0].transcript;
                     userInput.value = transcript;
@@ -852,6 +1216,7 @@
             } else {
                 micBtn.style.display = 'none';
             }
+<<<<<<< HEAD
     
             micBtn.addEventListener('click', function() {
                 if (recognition) {
@@ -872,6 +1237,9 @@
                 speechSynthesis.onvoiceschanged = populateVoices;
             }
     
+=======
+
+>>>>>>> 9acf1f627c297bc5e980343e3cda6aef9286cc63
             // Start the application
             init();
         });
