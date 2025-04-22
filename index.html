@@ -403,6 +403,8 @@
                     <span class="command-suggestion">What time is it?</span>
                     <span class="command-suggestion">Search for cats</span>
                     <span class="command-suggestion">Open calculator</span>
+                    <span class="command-suggestion">Open Ojashwa's portfolio</span>
+                    <span class="command-suggestion">Open Over Rev Time</span>
                 </div>
             </div>
         </div>
@@ -624,6 +626,16 @@
                     day: 'numeric' 
                 });
                 
+                // New portfolio commands
+                if (command.includes('ojashwa') && command.includes('portfolio')) {
+                    window.open('https://ojashwa64.github.io/ojashwa/', '_blank');
+                    return "Opening Ojashwa's portfolio";
+                }
+                else if (command.includes('over rev time') || command.includes('overrevtime')) {
+                    window.open('https://ojashwa64.github.io/OverRevTime/index.html', '_blank');
+                    return "Opening Over Rev Time";
+                }
+                
                 // WhatsApp commands
                 if (command.includes('send whatsapp') || command.includes('whatsapp message')) {
                     const match = command.match(/send whatsapp (?:message )?to (\w+)(?: saying (.+))?/i) || 
@@ -720,6 +732,8 @@
                 else if (command.includes('help')) {
                     return `I can respond to these commands:
     - Open/launch [YouTube, Google, Gmail, Maps, Calendar, Calculator]
+    - Open Ojashwa's portfolio
+    - Open Over Rev Time
     - Search for [anything]
     - Search YouTube for [videos]
     - Scroll up/down
